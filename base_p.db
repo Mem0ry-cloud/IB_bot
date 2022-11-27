@@ -1,0 +1,28 @@
+--
+-- Файл сгенерирован с помощью SQLiteStudio v3.3.3 в Пн окт 31 13:13:07 2022
+--
+-- Использованная кодировка текста: System
+--
+PRAGMA foreign_keys = off;
+BEGIN TRANSACTION;
+
+-- Таблица: accesses
+CREATE TABLE accesses (id INTEGER UNIQUE PRIMARY KEY AUTOINCREMENT NOT NULL, name TEXT NOT NULL);
+INSERT INTO accesses (id, name) VALUES (1, 'admin');
+INSERT INTO accesses (id, name) VALUES (2, 'teacher');
+INSERT INTO accesses (id, name) VALUES (3, 'student');
+
+-- Таблица: hometasks
+CREATE TABLE hometasks (id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE NOT NULL, task TEXT NOT NULL, subject int NOT NULL, grade INT NOT NULL DEFAULT (10), date DATE);
+INSERT INTO hometasks (id, task, subject, grade, date) VALUES (1, 'dosmth', 1, 10, '08.06.2006');
+
+-- Таблица: people
+CREATE TABLE people (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, name TEXT UNIQUE, access INT, subjects TEXT);
+INSERT INTO people (id, name, access, subjects) VALUES (1, '456484733', 1, NULL);
+
+-- Таблица: subjects
+CREATE TABLE subjects (id int UNIQUE NOT NULL PRIMARY KEY, name TEXT NOT NULL);
+INSERT INTO subjects (id, name) VALUES (1, 'TOK');
+
+COMMIT TRANSACTION;
+PRAGMA foreign_keys = on;
