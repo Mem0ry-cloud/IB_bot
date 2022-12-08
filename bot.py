@@ -59,12 +59,19 @@ def get_dates():
     return dates_mark
 
 
+command_get_homework_by_subject = "hw_by_subject"
+command_get_homework_by_date = "hw_by_date"
+command_add_admin = "add_admin"
+command_add_teacher = "add_teacher"
+command_add_homework = "add_hw"
+command_edit_homework = "edit_hw"
+main_menu = "main menu:"
+go_back = "go back"
 messages = Message("messages.txt")
 data_base = DataBase()
 token = '5727527989:AAGlxBkN1U_FfaIVlYsHhcvdUwYAZ4He21I'
 start_text = messages.get_message(1)
 access_violation = messages.get_message(2)
-bot = telebot.TeleBot(token)
 discipline_text = "Select the discipline🔎"
 grade_text = "Choose the grade🗄"
 date_text = "Select the date📅"
@@ -72,8 +79,10 @@ task_text = "Write your task📝(text only)"
 success_text = "Success✅"
 error_text = "Sorry, I haven't learned how to do it 😢"
 user_mark = telebot.types.ReplyKeyboardMarkup(True, False)
-user_mark.row('/check_homework_by_date', '/check_homework_by_subject')
-user_mark.row('/add_homework', '/edit_homework')
+user_mark.row(f"/{command_get_homework_by_date}", f"/{command_get_homework_by_subject}")
+user_mark.row(f"/{command_add_homework}", f"/{command_edit_homework}")
+nothing_mark = telebot.types.ReplyKeyboardMarkup(True, False)
+nothing_mark.row("nothing")
 heap = dict()
 
 
@@ -89,6 +98,8 @@ def add_to_heap(id, key, info):
         heap[id]["access"] = []
     heap[id][key] = info
 
+print("start")
+bot = telebot.TeleBot(token)
 
 @bot.message_handler(commands=['get_id'])
 def get_id(message):
@@ -100,7 +111,7 @@ def start_message(message):
     bot.send_message(message.chat.id, start_text, reply_markup=user_mark)
 
 
-@bot.message_handler(commands=['add_homework'])
+@bot.message_handler(commands=[command_add_homework])
 def add_homework(message):
     if not check_permittion(message.chat.id, 2):
         return bot.send_message(message.chat.id, access_violation)
@@ -111,11 +122,15 @@ def add_homework(message):
         homework_mark.row(variants[i * 4], variants[i * 4 + 1], variants[i * 4 + 2], variants[i * 4 + 3])
     for i in range(len(variants) % 4):
         homework_mark.row(variants[-i - 1])
+    homework_mark.row(go_back)
     bot.send_message(message.chat.id, discipline_text, reply_markup=homework_mark)
     bot.register_next_step_handler(message, add_homework_2)
 
 
 def add_homework_2(message):
+    if message.text == go_back:
+        bot.send_message(message.chat.id, main_menu, reply_markup=user_mark)
+        return
     id = message.chat.id
     add_to_heap(id, "subject", message.text)
     if not(heap[id]["subject"] in heap[id]["access"]):
@@ -123,11 +138,15 @@ def add_homework_2(message):
         return
     grade_mark = telebot.types.ReplyKeyboardMarkup(True, False)
     grade_mark.row("10", '11')
+    grade_mark.row(go_back)
     bot.send_message(message.chat.id, grade_text, reply_markup=grade_mark)
     bot.register_next_step_handler(message, add_homework_3)
 
 
 def add_homework_3(message):
+    if message.text == go_back:
+        bot.send_message(message.chat.id, main_menu, reply_markup=user_mark)
+        return
     try:
         add_to_heap(message.chat.id, "grade", convert_grade(message.text))
         bot.send_message(message.chat.id, f"{date_text}: day.month.year (example: 02.11.22 )", reply_markup=get_dates())
@@ -137,21 +156,28 @@ def add_homework_3(message):
 
 
 def add_homework_4(message):
+    if message.text == go_back:
+        bot.send_message(message.chat.id, main_menu, reply_markup=user_mark)
+        return
     try:
         add_to_heap(message.chat.id, "date", convert_to_date(message.text))
-        bot.send_message(message.chat.id, task_text)
+        bot.send_message(message.chat.id, task_text, reply_markup=nothing_mark)
         bot.register_next_step_handler(message, save_homework)
     except Exception:
         bot.send_message(message.chat.id, "the date is wrong", reply_markup=user_mark)
 
 
 def save_homework(message):
+    if message.text == go_back:
+        bot.send_message(message.chat.id, main_menu, reply_markup=user_mark)
+        return
     id = message.chat.id
     add_to_heap(id, "task", message.text)
     try:
         add_to_heap(id, "task_prev", data_base.get_homework(heap[id]["subject"], heap[message.chat.id]["date"], heap[id]["grade"]))
         markup = telebot.types.ReplyKeyboardMarkup(True, False)
         markup.add("edit", "add")
+        markup.row(go_back)
         bot.send_message(id, f"homework:{heap[id]['task_prev']}. add or edit?", reply_markup=markup)
         bot.register_next_step_handler(message, save_homework_2)
         return
@@ -165,11 +191,14 @@ def save_homework(message):
 
 
 def save_homework_2(message):
+    if message.text == go_back:
+        bot.send_message(message.chat.id, main_menu, reply_markup=user_mark)
+        return
     id = message.chat.id
     choice = message.text
     if choice == "add":
         data_base.edit_homework(heap[id]['task_prev'] + "; " + heap[id]['task'], heap[id]['subject'], heap[id]['date'], heap[id]['grade'])
-        bot.send_message(id, success_text)
+        bot.send_message(id, success_text, reply_markup=user_mark)
     elif choice == "edit":
         data_base.edit_homework(heap[id]['task'], heap[id]['subject'], heap[id]['date'], heap[id]['grade'])
         bot.send_message(id, success_text, reply_markup=user_mark)
@@ -177,7 +206,7 @@ def save_homework_2(message):
         bot.send_message(id, "incorrect data!", reply_markup=user_mark)
 
 
-@bot.message_handler(commands=['edit_homework'])
+@bot.message_handler(commands=[command_edit_homework])
 def edit_homework(message):
     if not check_permittion(message.chat.id, 2):
         return bot.send_message(message.chat.id, access_violation)
@@ -188,11 +217,15 @@ def edit_homework(message):
         subject_markup.row(variants[i * 4], variants[i * 4 + 1], variants[i * 4 + 2], variants[i * 4 + 3])
     for i in range(len(variants) % 4):
         subject_markup.row(variants[-i - 1])
+    subject_markup.row(go_back)
     bot.send_message(message.chat.id, discipline_text, reply_markup=subject_markup)
     bot.register_next_step_handler(message, edit_homework_2)
 
 
 def edit_homework_2(message):
+    if message.text == go_back:
+        bot.send_message(message.chat.id, main_menu, reply_markup=user_mark)
+        return
     id = message.chat.id
     add_to_heap(id, "subject", message.text)
     if not(heap[id]["subject"] in heap[id]["access"]):
@@ -203,6 +236,9 @@ def edit_homework_2(message):
 
 
 def edit_homework_3(message):
+    if message.text == go_back:
+        bot.send_message(message.chat.id, main_menu, reply_markup=user_mark)
+        return
     try:
         add_to_heap(message.chat.id, "date", convert_to_date(message.text))
     except Exception:
@@ -215,6 +251,9 @@ def edit_homework_3(message):
 
 
 def edit_homework_4(message):
+    if message.text == go_back:
+        bot.send_message(message.chat.id, main_menu, reply_markup=user_mark)
+        return
     id = message.chat.id
     try:
         add_to_heap(id, "grade", convert_grade(message.text))
@@ -224,16 +263,20 @@ def edit_homework_4(message):
         return
     choice_markup = telebot.types.ReplyKeyboardMarkup(True, False)
     choice_markup.add("delete", "edit", "add")
+    choice_markup.row(go_back)
     bot.send_message(message.chat.id, f"homework is:{homework}. Select what to do", reply_markup=choice_markup)
     bot.register_next_step_handler(message, edit_homework_res)
 
 
 def edit_homework_res(message):
+    if message.text == go_back:
+        bot.send_message(message.chat.id, main_menu, reply_markup=user_mark)
+        return
     id = message.chat.id
     add_to_heap(id, "choice", message.text)
     choice = heap[id]["choice"]
     if choice == "add" or choice == "edit":
-        bot.send_message(id, task_text)
+        bot.send_message(id, task_text, reply_markup=nothing_mark)
         bot.register_next_step_handler(message, edit_homework_res_2)
     elif choice == "delete":
         data_base.delete_homework(heap[id]["subject"], heap[id]["date"], heap[id]["grade"])
@@ -260,7 +303,7 @@ def show_subjects(message):
     bot.send_message(message.chat.id, ", ".join(data_base.get_all_subjects()))
 
 
-@bot.message_handler(commands=['add_teacher'])
+@bot.message_handler(commands=[command_add_teacher])
 def add_teacher(message):
     if not check_permittion(message.chat.id, 1):
         return bot.send_message(message.chat.id, access_violation)
@@ -280,7 +323,7 @@ def add_teacher(message):
         bot.send_message(message.chat.id, 'an error occured, example of input: /add_teacher .-2.tok,math_ai_sl', reply_markup=user_mark)
 
 
-@bot.message_handler(commands=['add_admin'])
+@bot.message_handler(commands=[command_add_admin])
 def add_admin(message):
     if not check_permittion(message.chat.id, 1):
         return bot.send_message(message.chat.id, access_violation)
@@ -292,10 +335,11 @@ def add_admin(message):
         bot.send_message(message.chat.id, 'an error occured, example of input: /add_admin .-2', reply_markup=user_mark)
 
 
-@bot.message_handler(commands=['check_homework_by_subject'])
+@bot.message_handler(commands=[command_get_homework_by_subject])
 def check_homework_subject(message):
     subject_markup = telebot.types.ReplyKeyboardMarkup(True, False)
     variants = data_base.get_all_subjects()
+    subject_markup.row(go_back)
     for i in range(int(len(variants) / 4)):
         subject_markup.row(variants[i * 4], variants[i * 4 + 1], variants[i * 4 + 2], variants[i * 4 + 3])
     for i in range(len(variants) % 4):
@@ -305,14 +349,22 @@ def check_homework_subject(message):
 
 
 def check_homework_subject_2(message):
+    if message.text == go_back:
+        bot.send_message(message.chat.id, main_menu, reply_markup=user_mark)
+        return
     add_to_heap(message.chat.id, "subject", message.text)
     grade_markup = telebot.types.ReplyKeyboardMarkup(True, False)
+    grade_markup.row(go_back)
     grade_markup.row('10', '11')
+
     bot.send_message(message.chat.id, grade_text, reply_markup=grade_markup)
     bot.register_next_step_handler(message, send_homework_subject)
 
 
 def send_homework_subject(message):
+    if message.text == go_back:
+        bot.send_message(message.chat.id, main_menu, reply_markup=user_mark)
+        return
     subject = heap[message.chat.id]["subject"]
     try:
         grade = convert_grade(message.text)
@@ -330,13 +382,16 @@ def send_homework_subject(message):
         bot.send_message(message.chat.id, "incorrect data", reply_markup=user_mark)
 
 
-@bot.message_handler(commands=['check_homework_by_date'])
+@bot.message_handler(commands=[command_get_homework_by_date])
 def check_homework_date(message):
     bot.send_message(message.chat.id, f"{date_text}: day.month.year (example: 02.11.22 )", reply_markup=get_dates())
     bot.register_next_step_handler(message, check_homework_date_2)
 
 
 def check_homework_date_2(message):
+    if message.text == go_back:
+        bot.send_message(message.chat.id, main_menu, reply_markup=user_mark)
+        return
     txt = message.text
     try:
         add_to_heap(message.chat.id, "date", convert_to_date(message.text))
