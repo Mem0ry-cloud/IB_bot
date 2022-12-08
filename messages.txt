@@ -1,15 +1,14 @@
 👋 Hi !
-👩🏻‍🎓🧑🏻‍🎓 I'm created with purpose to make sending and checking h/w
-of IB students easier
+👩🏻‍🎓🧑🏻‍🎓 I'm created with purpose to make uploading homework of IB students easier
 🤖I can:
 -🔝Upload your homework (soon)
 -🆕Send feedbacks from teachers (soon)
--🔍Find out home tasks according to your request
+-/hw_by_subject 🔍Find home tasks for today-future according to subject
+-/hw_by_date    🔍Find home tasks for date
+-/add_hw        Add homework
+-/edit_hw       Edit homework
 
-⚙️Channel of technical support: https://t.me/+osYH5SKrgrJiNTYy
-❤️Channel for your suggestions for the bot: https://t.me/+-jwfi8zwxEI5NGEy
-
-‼️                     Coded by George, Designed by Daniel                    ‼️
+‼️ Coded by George, Designed by Daniel️ ‼️
 \kn
 You don't have access to this command ;'<
 \kn
