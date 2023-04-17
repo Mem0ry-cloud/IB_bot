@@ -78,19 +78,19 @@ command_add_admin = "add_admin"
 command_add_teacher = "add_teacher"
 command_add_homework = "add_hw"
 command_edit_homework = "edit_hw"
-go_back = "go back"
-main_menu = "main menu:"
-messages = Message("messages.txt")
-data_base = DataBase()
-token = '5727527989:AAGlxBkN1U_FfaIVlYsHhcvdUwYAZ4He21I'
-start_text = messages.get_message(1)
-access_violation = messages.get_message(2)
 discipline_text = "Select the discipline🔎"
 grade_text = "Choose the grade🗄"
 date_text = "Select the date📅"
 task_text = "Write your task📝(text only)"
 success_text = "Success✅"
 error_text = "Sorry, I haven't learned how to do it 😢"
+go_back = "go back"
+main_menu = "main menu:"
+messages = Message("messages.txt")
+data_base = DataBase()
+token = "a personal telegram bot's token"
+start_text = messages.get_message(1)
+access_violation = messages.get_message(2)
 heap = dict()
 
 
